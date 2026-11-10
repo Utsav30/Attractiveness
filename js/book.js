@@ -13,7 +13,7 @@ const { user, profile } = await requireAuth();
 
 // Same source of truth as the dashboard, so a book removed from
 // assignments.json also stops being reachable by typing its id into the URL.
-const allowed = booksFor(profile.rollNo, await loadAssignments());
+const allowed = booksFor(profile.rollNo, (await loadAssignments()).map);
 if (!allowed.includes(bookId)) {
   alert("That book is not in your assigned set.");
   location.replace("dashboard.html");

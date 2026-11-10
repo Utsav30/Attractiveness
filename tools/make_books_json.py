@@ -76,9 +76,8 @@ def main():
         json.dump(books, f, indent=2, ensure_ascii=False)
     print(f"wrote {a.out} with {len(books)} books")
 
-    if len(books) < 21:
-        print(f"WARNING: only {len(books)} books. Each annotator needs 21, "
-              f"so every user would get the same set. Add more books.")
+    print("Remember: a book is only visible to someone whose roll number lists it "
+          "in data/assignments.json.")
 
     if os.path.isdir(a.images):
         missing = check_images(books, a.images, a.ext)

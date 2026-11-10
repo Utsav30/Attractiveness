@@ -24,6 +24,14 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+// Counterpart to the demo backend's badge: makes it obvious in DevTools which
+// project this page is actually talking to.
+console.info(
+  "%cLIVE%c — signed in against Firebase project \"" + firebaseConfig.projectId +
+    "\". Accounts appear under Authentication > Users; ratings under Firestore > users/{uid}/responses.",
+  "background:#1f9d55;color:#fff;padding:2px 6px;border-radius:4px", ""
+);
+
 export {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,

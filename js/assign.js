@@ -11,11 +11,52 @@
 // that already exist. A roll number the file does not list gets no books.
 // ---------------------------------------------------------------------------
 
-/** Fetch data/assignments.json, tolerating a missing or malformed file. */
-export function loadAssignments() {
-  return fetch("data/assignments.json")
-    .then((r) => (r.ok ? r.json() : {}))
-    .catch(() => ({}));
+/**
+ * Fetch data/assignments.json.
+ *
+ * Returns { map, problem, rolls }. `problem` is a human-readable string when
+ * the file is missing or malformed, so an empty dashboard can say WHY it is
+ * empty instead of looking broken. A missing file and a file with a stray
+ * comma produce the same empty result otherwise, and they need different fixes.
+ */
+export async function loadAssignments() {
+  let res;
+  try {
+    // no-store because GitHub Pages caches assets for ~10 minutes, and this is
+    // the one file you edit expecting an immediate effect.
+    res = await fetch("data/assignments.json", { cache: "no-store" });
+  } catch (e) {
+    return { map: {}, rolls: [], problem: `Could not load data/assignments.json (${e.message}).` };
+  }
+
+  if (!res.ok) {
+    return {
+      map: {}, rolls: [],
+      problem: `data/assignments.json was not found (HTTP ${res.status}). ` +
+               `Add it to the repo next to data/books.json.`,
+    };
+  }
+
+  let map;
+  const text = await res.text();
+  try {
+    map = JSON.parse(text);
+  } catch (e) {
+    return { map: {}, rolls: [], problem: `data/assignments.json is not valid JSON — ${e.message}` };
+  }
+
+  if (!map || typeof map !== "object" || Array.isArray(map)) {
+    return {
+      map: {}, rolls: [],
+      problem: `data/assignments.json must be an object of "rollNo": [book ids], not an array.`,
+    };
+  }
+
+  const rolls = Object.keys(map);
+  console.info(
+    `assignments.json loaded: ${rolls.length} roll number(s) — ${rolls.join(", ") || "(none)"}`
+  );
+  return { map, rolls, problem: null };
 }
 
 /**

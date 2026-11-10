@@ -12,14 +12,14 @@ document.getElementById("logoutBtn").onclick = async () => {
   location.replace("index.html");
 };
 
-const [books, overrides] = await Promise.all([
+const [books, plan] = await Promise.all([
   fetch("data/books.json").then((r) => r.json()),
   loadAssignments(),
 ]);
 const byId = Object.fromEntries(books.map((b) => [b.id, b]));
 
 // The roll number's entry in data/assignments.json, read fresh on every load.
-const assigned = booksFor(profile.rollNo, overrides);
+const assigned = booksFor(profile.rollNo, plan.map);
 const progress = profile.progress || {};
 
 const subline = document.getElementById("subline");
@@ -28,9 +28,12 @@ if (assigned.length) {
     `${assigned.length} book${assigned.length === 1 ? "" : "s"} assigned to ` +
     `${profile.rollNo}. Click a cover to start rating.`;
 } else {
-  subline.textContent =
-    `No books are assigned to roll number "${profile.rollNo}" yet. ` +
-    `Ask the study owner to add it to the assignment list.`;
+  // Say exactly which of the three failure modes this is.
+  subline.textContent = plan.problem
+    ? plan.problem
+    : `Roll number "${profile.rollNo}" is not listed in data/assignments.json. ` +
+      `The file lists ${plan.rolls.length} roll number(s); add yours as a ` +
+      `lowercase key, e.g. {"${profile.rollNo}": ["b0001"]}.`;
   subline.className = "error";
 }
 

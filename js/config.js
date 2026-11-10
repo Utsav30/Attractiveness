@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 
 export const CONFIG = {
-  STUDY_NAME: "Assignment 2-B",
+  STUDY_NAME: "Book Cover Attractiveness Study",
 
   // ---------------------------------------------------------------- DEMO ---
   // true  = no Firebase, no image files needed. Sign-ups and ratings are kept
@@ -11,14 +11,16 @@ export const CONFIG = {
   //         coloured placeholders. Use this to look at the portal and show it
   //         to people before anything is set up.
   // false = live: real Firebase Auth + Firestore, real images from IMAGE_BASE.
+  //         This is what you want in production.
   //
   // Flip this to false once you have pasted your keys into
   // js/firebase-config.js and added your covers. Never collect real study
   // data with DEMO_MODE on — it is not saved anywhere you can export.
   DEMO_MODE: false,
 
-  BOOKS_PER_USER: 21,       // how many books each annotator gets
-  COVERS_PER_PROMPT: 5,     // generated covers in each prompt row
+  // How many books each annotator gets is NOT set here — it is however many
+  // ids you list for them in data/assignments.json.
+  COVERS_PER_PROMPT: 4,     // generated covers in each prompt row (one per generator)
   RATING_MAX: 10,           // attractiveness scale 1..RATING_MAX
   CONFIDENCE_MAX: 10,       // confidence scale 1..CONFIDENCE_MAX
   PANEL_TOP_N: 10,          // how many covers to pick in the final panel

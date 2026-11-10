@@ -303,15 +303,17 @@ fastest way to catch a mis-named cover before annotators do.
 No metadata handy? `python tools/make_books_json.py --scan images` builds the list from
 the folder names and you fill in titles afterwards.
 
-**D4. Pool size matters.** The file shipped here has 30 sample books so you can click
-around. Each annotator gets 21 of them, so with a pool of exactly 21 *everyone gets the
-same set*. Aim for a pool of at least 40–60 if you want meaningful variation; the
-assignment keeps per-book coverage even and still overlaps annotators so you can compute
-inter-annotator agreement.
+**D4. Assign the books.** Create `data/assignments.json` listing each annotator's
+roll number and the book ids they should see (see "How the portal works" below). Nobody
+sees anything until their roll number is in that file.
 
-**D5. Study knobs.** `js/config.js` holds `BOOKS_PER_USER`, `COVERS_PER_PROMPT`,
-`RATING_MAX`, `CONFIDENCE_MAX`, `PANEL_TOP_N`, `IMAGE_BASE` and `IMAGE_EXT`. Change them
-there and nothing else needs touching.
+Coverage is worth modelling before you recruit: 30 annotators x 21 books = 630 rating
+slots, which spread over 1000 books leaves most books rated by nobody. For at least two
+ratings per book, keep the active pool at or below half your total slots.
+
+**D5. Study knobs.** `js/config.js` holds `DEMO_MODE`, `COVERS_PER_PROMPT`,
+`RATING_MAX`, `CONFIDENCE_MAX`, `PANEL_TOP_N`, `IMAGE_BASE` and `IMAGE_EXT`. How many
+books a person gets is not a setting — it is how many ids you list for them.
 
 ---
 
@@ -376,11 +378,30 @@ book set, with `prompt_id` ready to group by.
 
 ## How the portal works
 
-**Assignment.** `js/assign.js` hashes the lowercased roll number (FNV-1a, stable across
-browsers) and walks the pool with a stride coprime to the pool size. Same roll number
-always yields the same 21 distinct books, on any device; different roll numbers get
-different but overlapping sets. The list is written to the user document at signup and
-frozen, so editing `books.json` later never reshuffles someone mid-study.
+**Assignment.** `data/assignments.json` decides everything, and it is the only
+source of truth:
+
+```json
+{
+  "_note": "anything that is not a roll number is ignored, so notes are safe here",
+  "2221cs28": ["b0001"],
+  "2221cs29": ["b0001", "b0002"]
+}
+```
+
+Keys are **lowercase** roll numbers; values are book ids from `data/books.json`.
+Nothing about the assignment is stored in Firestore, and the file is re-read on every
+page load with `cache: "no-store"`, so an edit takes effect for existing accounts on
+their next refresh — no re-signup. A roll number the file does not list gets no books
+and an explanatory message.
+
+It is strict JSON: **no `//` comments**, no trailing commas, double quotes only. One
+stray comment makes the whole file unparseable and every annotator looks unassigned.
+Paste it into a JSON validator if the dashboard says it is invalid.
+
+`tools/make_assignments.py` generates the file for a list of roll numbers with balanced
+coverage, and `--dry-run` prints the ratings-per-book you will actually get before you
+commit to it.
 
 **Per book, an annotator provides:** 1 rating + confidence for the original;
 for each of 15 prompts, 5 ratings, a 1–5 ranking, a confidence and a free-text reason;
@@ -399,11 +420,12 @@ index.html          signup + login
 dashboard.html      21 books, red/green borders, progress
 book.html           Step 1 (15 prompt rows) + Step 2 (76-cover panel)
 js/config.js        all study knobs, incl. DEMO_MODE
+data/assignments.json  who sees which books (you create this)
 js/firebase-config.js  <- paste your keys here
 js/backend.js       picks the backend from DEMO_MODE
 js/backend-firebase.js  live Firebase init + auth guard
 js/backend-demo.js  browser-only fake, for Part 0
-js/assign.js        roll-number -> 21 books
+js/assign.js        reads data/assignments.json
 js/model.js         response shape + completeness rules
 js/auth.js  js/dashboard.js  js/book.js
 css/styles.css      light theme
@@ -413,6 +435,41 @@ firestore.rules     paste into the Firebase console
 tools/              books.json builder, placeholder images, CSV export,
                     Drive -> images/ exporter
 ```
+
+## Am I live, or still in demo mode?
+
+The quickest check is the page itself. In demo mode an amber
+**"DEMO MODE — saved in this browser only"** badge sits in the bottom-left corner of
+every screen. If you can see it, nothing is reaching Firebase. If it is absent, you are
+live.
+
+Open DevTools (F12) → Console for confirmation: demo mode logs an amber
+`DEMO MODE` line, live mode logs a green `LIVE` line naming the Firebase project it
+connected to.
+
+Two more decisive tests:
+
+* Log in from a **different browser, or a private window**. Demo data lives in one
+  browser's localStorage, so the account simply will not exist there. A real account
+  works anywhere.
+* Look in **Authentication → Users** in the console. A real signup appears within
+  seconds.
+
+If the badge is showing when you expected live: `DEMO_MODE` is still `true`. Check the
+**deployed** file, not your local copy —
+`https://YOUR_USERNAME.github.io/YOUR_REPO/js/config.js` — then push and hard-refresh.
+
+Old demo data hangs around in localStorage after you switch. It is inert, but to clear
+it run this in the DevTools console:
+
+```js
+localStorage.removeItem("bookCoverStudy.demo")
+```
+
+> Firebase Auth does keep something in your browser once you are live: your signed-in
+> session, under `firebaseLocalStorageDb` in IndexedDB. That is only the login token, so
+> you are not asked to sign in on every page. Your ratings are not there — they go
+> straight to Firestore.
 
 ## Where the data lives, and how to inspect it
 
