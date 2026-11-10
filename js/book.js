@@ -258,7 +258,7 @@ function renderRows() {
 
     const head = el("div", "row-head");
     head.appendChild(el("div", null,
-      `<span class="rowno">Prompt ${idx + 1} ${p.task}</span>
+      `<span class="rowno">${idx + 1}, ${p.task}</span>
        <span class="prompt-text">${esc(p.text)}</span>`));
     const tick = el("span", "row-tick");
     head.appendChild(tick);
