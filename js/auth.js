@@ -1,5 +1,4 @@
 import { CONFIG } from "./config.js";
-import { assignBooksFor, activeBooks } from "./assign.js";
 import {
   auth, db,
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -86,26 +85,12 @@ signupForm.onsubmit = async (e) => {
   signingUp = true;
   let cred = null, profileWritten = false;
   try {
-    // 1. Work out this person's books.
-    //    data/assignments.json wins if it names this roll number; otherwise the
-    //    roll number is hashed into a balanced slice of data/books.json.
-    const [pool, overrides] = await Promise.all([
-      fetch("data/books.json").then((r) => r.json()),
-      fetch("data/assignments.json")
-        .then((r) => (r.ok ? r.json() : {}))
-        .catch(() => ({})),
-    ]);
-
-    const assignedBooks = assignBooksFor(
-      rollNo, activeBooks(pool), CONFIG.BOOKS_PER_USER, overrides
-    );
-
-    // 2. Create the auth account.
+    // 1. Create the auth account.
     cred = await createUserWithEmailAndPassword(auth, email, password);
     const uid = cred.user.uid;
 
-    // 3. Profile document. Books are frozen at signup, so editing the pool
-    //    later never reshuffles an annotator mid-study.
+    // 2. Profile document. No book list is stored here: assignment lives
+    //    entirely in data/assignments.json and is read fresh on every page.
     //
     //    Each write is tagged with the step it belongs to. Both steps can fail
     //    with permission-denied for completely different reasons, and reporting
@@ -114,14 +99,13 @@ signupForm.onsubmit = async (e) => {
     try {
       await setDoc(doc(db, "users", uid), {
         uid, name, rollNo, gender, email,
-        assignedBooks,
         progress: {},
         createdAt: serverTimestamp(),
       });
     } catch (e) { e.stage = "profile"; throw e; }
     profileWritten = true;
 
-    // 4. Claim the roll number LAST. Security rules allow create only, so this
+    // 3. Claim the roll number LAST. Security rules allow create only, so this
     //    fails if the roll is taken — that is the duplicate check, done
     //    server-side without exposing the roll list.
     //

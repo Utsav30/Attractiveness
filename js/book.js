@@ -1,6 +1,6 @@
 import { CONFIG, originalUrl, generatedUrl, coverUrl } from "./config.js";
 import { emptyResponse, hydrate, rowDone, panelDone, originalDone, progressOf } from "./model.js";
-import { effectiveBooks, loadAssignments } from "./assign.js";
+import { booksFor, loadAssignments } from "./assign.js";
 import {
   requireAuth, db, doc, getDoc, setDoc, updateDoc, serverTimestamp,
 } from "./backend.js";
@@ -13,7 +13,7 @@ const { user, profile } = await requireAuth();
 
 // Same source of truth as the dashboard, so a book removed from
 // assignments.json also stops being reachable by typing its id into the URL.
-const allowed = effectiveBooks(profile, await loadAssignments());
+const allowed = booksFor(profile.rollNo, await loadAssignments());
 if (!allowed.includes(bookId)) {
   alert("That book is not in your assigned set.");
   location.replace("dashboard.html");
@@ -178,7 +178,7 @@ function renderRows() {
 
     const head = el("div", "row-head");
     head.appendChild(el("div", null,
-      `<span class="rowno">${idx + 1} ${p.task}</span>
+      `<span class="rowno">Prompt ${idx + 1}</span>
        <span class="prompt-text">${esc(p.text)}</span>`));
     const tick = el("span", "row-tick");
     head.appendChild(tick);

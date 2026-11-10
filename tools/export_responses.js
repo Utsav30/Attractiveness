@@ -24,6 +24,15 @@ function arg(name, dflt) {
 
 const keyPath = arg("key", "serviceAccountKey.json");
 const outDir = arg("out", "export");
+// Assignment lives in the repo, not in Firestore, so read it from disk.
+const assignPath = arg("assignments", "data/assignments.json");
+let ASSIGNMENTS = {};
+try {
+  ASSIGNMENTS = JSON.parse(fs.readFileSync(assignPath, "utf8"));
+  console.log(`assignments: ${Object.keys(ASSIGNMENTS).length} roll numbers from ${assignPath}`);
+} catch {
+  console.log(`(no ${assignPath} — assigned_books will be blank)`);
+}
 
 if (!fs.existsSync(keyPath)) {
   console.error(`Service account key not found at ${keyPath}.
@@ -62,7 +71,7 @@ const writeCsv = (file, header, rows) => {
       name: p.name,
       gender: p.gender,
       email: p.email,
-      assigned_books: (p.assignedBooks || []).join(" "),
+      assigned_books: (ASSIGNMENTS[String(p.rollNo || "").toLowerCase()] || []).join(" "),
       books_complete: Object.values(p.progress || {}).filter((x) => x.complete).length,
       created_at: p.createdAt ? p.createdAt.toDate().toISOString() : "",
     });

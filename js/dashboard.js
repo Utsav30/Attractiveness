@@ -1,5 +1,5 @@
 import { CONFIG, originalUrl } from "./config.js";
-import { effectiveBooks, loadAssignments } from "./assign.js";
+import { booksFor, loadAssignments } from "./assign.js";
 import { requireAuth, auth, signOut } from "./backend.js";
 
 const { profile } = await requireAuth();
@@ -18,13 +18,21 @@ const [books, overrides] = await Promise.all([
 ]);
 const byId = Object.fromEntries(books.map((b) => [b.id, b]));
 
-// data/assignments.json wins if it lists this roll number, so edits to it take
-// effect for existing accounts too.
-const assigned = effectiveBooks(profile, overrides);
+// The roll number's entry in data/assignments.json, read fresh on every load.
+const assigned = booksFor(profile.rollNo, overrides);
 const progress = profile.progress || {};
 
-document.getElementById("subline").textContent =
-  `${assigned.length} Click a cover to start.`;
+const subline = document.getElementById("subline");
+if (assigned.length) {
+  subline.textContent =
+    `${assigned.length} book${assigned.length === 1 ? "" : "s"} assigned to ` +
+    `${profile.rollNo}. Click a cover to start rating.`;
+} else {
+  subline.textContent =
+    `No books are assigned to roll number "${profile.rollNo}" yet. ` +
+    `Ask the study owner to add it to the assignment list.`;
+  subline.className = "error";
+}
 
 let completeCount = 0;
 const grid = document.getElementById("grid");

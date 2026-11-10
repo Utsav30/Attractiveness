@@ -8,8 +8,11 @@ rules_version = '2';
 //   * nobody can see anybody else's ratings;
 //   * nobody can see the list of registered roll numbers;
 //   * a roll number can be claimed exactly once (create-only);
-//   * assignedBooks and rollNo cannot be edited after signup, so an annotator
-//     cannot swap themselves onto a different set of books.
+//   * the roll number cannot be edited after signup, so an annotator cannot
+//     swap themselves onto someone else's entry in data/assignments.json.
+//
+// No book assignment is stored in Firestore. data/assignments.json in the repo
+// decides who sees what, and the portal reads it on every page load.
 //
 // Your export script uses the Admin SDK, which bypasses these rules.
 
@@ -41,15 +44,14 @@ service cloud.firestore {
       allow create: if request.auth != null
                     && request.auth.uid == uid
                     && request.resource.data.uid == uid
-                    && request.resource.data.rollNo is string
-                    && request.resource.data.assignedBooks is list;
+                    && request.resource.data.rollNo is string;
 
-      // Updates are for the progress summary only — identity and the assigned
-      // book set are frozen.
+      // Updates are for the progress summary only — the roll number is frozen,
+      // because it is the key the assignment file is looked up by. No book list
+      // is stored here at all; data/assignments.json decides that.
       allow update: if request.auth != null
                     && request.auth.uid == uid
-                    && request.resource.data.rollNo == resource.data.rollNo
-                    && request.resource.data.assignedBooks == resource.data.assignedBooks;
+                    && request.resource.data.rollNo == resource.data.rollNo;
 
       // Lets a failed signup remove the profile it just wrote. Harmless: book
       // assignment is derived from the roll number, so re-registering gives
