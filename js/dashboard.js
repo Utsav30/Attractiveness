@@ -28,7 +28,7 @@ const progress = profile.progress || {};
 const subline = document.getElementById("subline");
 if (assigned.length) {
   subline.textContent =
-    `${profile.rollNo}. Click a cover image to start.`;
+    `${profile.rollNo}: Click a cover image to start.`;
 } else {
   // Say exactly which of the three failure modes this is.
   subline.textContent = plan.problem
@@ -70,7 +70,7 @@ assigned.forEach((bookId, idx) => {
 const pct = assigned.length ? Math.round((completeCount / assigned.length) * 100) : 0;
 document.getElementById("overallBar").style.width = pct + "%";
 document.getElementById("overallText").textContent =
-  `${completeCount} of ${assigned.length} books finished (${pct}%)`;
+  `${completeCount} of ${assigned.length} finished (${pct}%)`;
 
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) =>
