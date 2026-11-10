@@ -258,7 +258,7 @@ function renderRows() {
 
     const head = el("div", "row-head");
     head.appendChild(el("div", null,
-      `<span class="rowno">Prompt ${idx + 1}</span>
+      `<span class="rowno">Prompt ${idx + 1} ${p.task}</span>
        <span class="prompt-text">${esc(p.text)}</span>`));
     const tick = el("span", "row-tick");
     head.appendChild(tick);
@@ -404,8 +404,8 @@ function renderPanel() {
 
   const intro = el("section", "card");
   intro.appendChild(el("h2", null, `Pick the ${CONFIG.PANEL_TOP_N} most attractive covers`));
-  intro.appendChild(el("p", "muted",
-    `All ${1 + prompts.length * CONFIG.COVERS_PER_PROMPT} covers for this book are below — the original plus every generated one. Click to select up to ${CONFIG.PANEL_TOP_N}. Selected covers appear in the ranking list on the right; reorder them so rank 1 is the most attractive.`));
+  // intro.appendChild(el("p", "muted",
+  //   `All ${1 + prompts.length * CONFIG.COVERS_PER_PROMPT} covers for this book are below — the original plus every generated one. Click to select up to ${CONFIG.PANEL_TOP_N}. Selected covers appear in the ranking list on the right; reorder them so rank 1 is the most attractive.`));
   pane.appendChild(intro);
 
   const wrap = el("div", "panel-wrap");
