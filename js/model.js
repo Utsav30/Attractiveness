@@ -20,7 +20,7 @@ export function emptyResponse(prompts) {
     };
   }
   return {
-    original: { rating: null, confidence: null },
+    original: { rating: null, confidence: null, reason: "" },
     rows,
     panel: { selected: [], confidence: null, reason: "" },
   };
@@ -31,6 +31,7 @@ export function hydrate(stored, prompts) {
   const base = emptyResponse(prompts);
   if (!stored) return base;
   if (stored.original) Object.assign(base.original, stored.original);
+  if (typeof base.original.reason !== "string") base.original.reason = "";
   if (stored.rows) {
     for (const p of prompts) {
       const s = stored.rows[p.id];
@@ -60,7 +61,9 @@ export function hydrate(stored, prompts) {
 const filled = (v) => v !== null && v !== undefined && v !== "";
 
 export function originalDone(r) {
-  return filled(r.original.rating) && filled(r.original.confidence);
+  return filled(r.original.rating) &&
+         filled(r.original.confidence) &&
+         !!(r.original.reason && r.original.reason.trim());
 }
 
 export function rowDone(row) {

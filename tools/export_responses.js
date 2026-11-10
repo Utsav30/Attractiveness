@@ -87,6 +87,7 @@ const writeCsv = (file, header, rows) => {
         ...common,
         rating: d.original?.rating ?? "",
         confidence: d.original?.confidence ?? "",
+        reason: d.original?.reason ?? "",
         book_complete: d.progress?.complete ?? false,
         updated_at: updated,
       });
@@ -129,7 +130,7 @@ const writeCsv = (file, header, rows) => {
   writeCsv(path.join(outDir, "annotators.csv"),
     ["uid","roll_no","name","gender","email","assigned_books","books_complete","created_at"], annotators);
   writeCsv(path.join(outDir, "original.csv"),
-    ["uid","roll_no","gender","book_id","rating","confidence","book_complete","updated_at"], original);
+    ["uid","roll_no","gender","book_id","rating","confidence","reason","book_complete","updated_at"], original);
   writeCsv(path.join(outDir, "generated.csv"),
     ["uid","roll_no","gender","book_id","prompt_id","cover_id","cover_index","rating","rank_in_row","row_confidence","row_reason_rating","row_reason_rank","updated_at"], generated);
   writeCsv(path.join(outDir, "panel.csv"),

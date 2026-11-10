@@ -229,6 +229,18 @@ function renderHead() {
   }));
   box.appendChild(r2);
 
+  // Same free-text reasoning the prompt rows ask for, so the original cover is
+  // not the one judgement with no explanation attached to it.
+  const r3 = el("div", "field grow");
+  r3.appendChild(el("label", null, "Why did you rate it this way?"));
+  const ta = el("textarea");
+  ta.rows = 2;
+  ta.placeholder = "e.g. the type is confident and the colour palette suits the genre, but it is busy at thumbnail size…";
+  ta.value = state.original.reason || "";
+  ta.oninput = () => { state.original.reason = ta.value; markDirty(); refreshStatus(); };
+  r3.appendChild(ta);
+  box.appendChild(r3);
+
   right.appendChild(box);
   head.appendChild(left);
   head.appendChild(right);
