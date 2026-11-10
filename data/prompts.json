@@ -13,5 +13,4 @@
   { "id": "p12", "text": "Analyze the following book cover image based on its attractiveness." , "task": "blurb-aware contextual design"},
   { "id": "p13", "text": "Analyze the following book cover image based on its attractiveness." , "task": "Classical retro"},
   { "id": "p14", "text": "Analyze the following book cover image based on its attractiveness." , "task": "Modern design"},
-  // { "id": "p15", "text": "Analyze the following book cover image based on its attractiveness." , "task": "Minimalist redesign"}
 ]
