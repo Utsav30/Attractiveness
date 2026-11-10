@@ -17,7 +17,7 @@ const assigned = profile.assignedBooks || [];
 const progress = profile.progress || {};
 
 document.getElementById("subline").textContent =
-  `${assigned.length} books assigned from your roll number. Click a cover to start rating.`;
+  `Click a cover to start.`;
 
 let completeCount = 0;
 const grid = document.getElementById("grid");

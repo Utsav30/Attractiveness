@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------------
 
 export const CONFIG = {
-  STUDY_NAME: "Book Cover Attractiveness Study",
+  STUDY_NAME: "Assignment 2-B",
 
   // ---------------------------------------------------------------- DEMO ---
   // true  = no Firebase, no image files needed. Sign-ups and ratings are kept
