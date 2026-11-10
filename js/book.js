@@ -27,7 +27,7 @@ const state = hydrate(stored.exists() ? stored.data() : null, prompts);
 
 document.querySelectorAll(".topn").forEach((e) => (e.textContent = CONFIG.PANEL_TOP_N));
 document.getElementById("bookTitleTop").textContent = book.title;
-document.title = `${book.title} — Book Cover Study`;
+document.title = `${book.title} — Assingment 2-B`;
 
 // ------------------------------------------------------------ saving layer
 const saveState = document.getElementById("saveState");
@@ -171,7 +171,7 @@ function renderRows() {
 
     const head = el("div", "row-head");
     head.appendChild(el("div", null,
-      `<span class="rowno">Prompt ${idx + 1}</span>
+      `<span class="rowno">${idx + 1} ${p.task}</span>
        <span class="prompt-text">${esc(p.text)}</span>`));
     const tick = el("span", "row-tick");
     head.appendChild(tick);

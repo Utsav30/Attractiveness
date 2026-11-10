@@ -50,7 +50,7 @@ assigned.forEach((bookId, idx) => {
 const pct = assigned.length ? Math.round((completeCount / assigned.length) * 100) : 0;
 document.getElementById("overallBar").style.width = pct + "%";
 document.getElementById("overallText").textContent =
-  `${completeCount} of ${assigned.length} books finished (${pct}%)`;
+  `${completeCount} of ${assigned.length} finished (${pct}%)`;
 
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) =>
