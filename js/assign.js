@@ -93,3 +93,26 @@ export function assignBooksFor(rollNo, pool, count, explicit) {
 
   return assignBooks(roll, pool, count);
 }
+
+/**
+ * What this annotator may actually open, right now.
+ *
+ * data/assignments.json is authoritative and is re-read on every page load, so
+ * editing it changes what people see immediately — including accounts that
+ * already exist. The list frozen into users/{uid} at signup is the fallback for
+ * roll numbers the file does not mention, and stays as an audit record of what
+ * was originally handed out.
+ */
+export function effectiveBooks(profile, overrides) {
+  const roll = String(profile && profile.rollNo || "").trim().toLowerCase();
+  const listed = overrides && overrides[roll];
+  if (Array.isArray(listed) && listed.length) return [...new Set(listed)];
+  return (profile && profile.assignedBooks) || [];
+}
+
+/** Fetch data/assignments.json, tolerating a missing file. */
+export function loadAssignments() {
+  return fetch("data/assignments.json")
+    .then((r) => (r.ok ? r.json() : {}))
+    .catch(() => ({}));
+}

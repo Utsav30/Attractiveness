@@ -1,4 +1,5 @@
 import { CONFIG, originalUrl } from "./config.js";
+import { effectiveBooks, loadAssignments } from "./assign.js";
 import { requireAuth, auth, signOut } from "./backend.js";
 
 const { profile } = await requireAuth();
@@ -11,13 +12,19 @@ document.getElementById("logoutBtn").onclick = async () => {
   location.replace("index.html");
 };
 
-const books = await fetch("data/books.json").then((r) => r.json());
+const [books, overrides] = await Promise.all([
+  fetch("data/books.json").then((r) => r.json()),
+  loadAssignments(),
+]);
 const byId = Object.fromEntries(books.map((b) => [b.id, b]));
-const assigned = profile.assignedBooks || [];
+
+// data/assignments.json wins if it lists this roll number, so edits to it take
+// effect for existing accounts too.
+const assigned = effectiveBooks(profile, overrides);
 const progress = profile.progress || {};
 
 document.getElementById("subline").textContent =
-  `Click a cover to start.`;
+  `${assigned.length} Click a cover to start.`;
 
 let completeCount = 0;
 const grid = document.getElementById("grid");
@@ -50,7 +57,7 @@ assigned.forEach((bookId, idx) => {
 const pct = assigned.length ? Math.round((completeCount / assigned.length) * 100) : 0;
 document.getElementById("overallBar").style.width = pct + "%";
 document.getElementById("overallText").textContent =
-  `${completeCount} of ${assigned.length} finished (${pct}%)`;
+  `${completeCount} of ${assigned.length} books finished (${pct}%)`;
 
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) =>

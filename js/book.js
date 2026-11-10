@@ -1,5 +1,6 @@
 import { CONFIG, originalUrl, generatedUrl, coverUrl } from "./config.js";
 import { emptyResponse, hydrate, rowDone, panelDone, originalDone, progressOf } from "./model.js";
+import { effectiveBooks, loadAssignments } from "./assign.js";
 import {
   requireAuth, db, doc, getDoc, setDoc, updateDoc, serverTimestamp,
 } from "./backend.js";
@@ -10,9 +11,15 @@ if (!bookId) location.replace("dashboard.html");
 
 const { user, profile } = await requireAuth();
 
-if (!(profile.assignedBooks || []).includes(bookId)) {
+// Same source of truth as the dashboard, so a book removed from
+// assignments.json also stops being reachable by typing its id into the URL.
+const allowed = effectiveBooks(profile, await loadAssignments());
+if (!allowed.includes(bookId)) {
   alert("That book is not in your assigned set.");
   location.replace("dashboard.html");
+  // Stall rather than throw: the page is navigating away, and an uncaught
+  // error here would just litter the console on the way out.
+  await new Promise(() => {});
 }
 
 const [books, prompts] = await Promise.all([
@@ -27,7 +34,7 @@ const state = hydrate(stored.exists() ? stored.data() : null, prompts);
 
 document.querySelectorAll(".topn").forEach((e) => (e.textContent = CONFIG.PANEL_TOP_N));
 document.getElementById("bookTitleTop").textContent = book.title;
-document.title = `${book.title} — Assingment 2-B`;
+document.title = `${book.title} — Book Cover Study`;
 
 // ------------------------------------------------------------ saving layer
 const saveState = document.getElementById("saveState");
