@@ -15,7 +15,7 @@ export const CONFIG = {
   // Flip this to false once you have pasted your keys into
   // js/firebase-config.js and added your covers. Never collect real study
   // data with DEMO_MODE on — it is not saved anywhere you can export.
-  DEMO_MODE: true,
+  DEMO_MODE: false,
 
   BOOKS_PER_USER: 21,       // how many books each annotator gets
   COVERS_PER_PROMPT: 5,     // generated covers in each prompt row
