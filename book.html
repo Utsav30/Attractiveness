@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rate book — Book Cover Study</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div>
+      <a class="back" href="dashboard.html">← All books</a>
+      <strong id="bookTitleTop"></strong>
+    </div>
+    <div class="topbar-actions">
+      <span class="save-state" id="saveState">Saved</span>
+      <button class="btn ghost" id="saveNow">Save now</button>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+
+  <!-- ------------------------- book header ------------------------- -->
+  <section class="card book-head" id="bookHead"></section>
+
+  <!-- ---------------------------- tabs ----------------------------- -->
+  <div class="tabs big" role="tablist">
+    <button class="tab active" id="tabRows" role="tab">
+      Step 1 · Rate generated covers <span class="pill" id="pillRows"></span>
+    </button>
+    <button class="tab" id="tabPanel" role="tab">
+      Step 2 · Final panel (top <span class="topn"></span>) <span class="pill" id="pillPanel"></span>
+    </button>
+  </div>
+
+  <section id="rowsPane"></section>
+
+  <section id="panelPane" hidden></section>
+
+  <div class="page-foot">
+    <a class="btn ghost" href="dashboard.html">← Back to all books</a>
+    <button class="btn primary" id="saveBottom">Save and continue later</button>
+  </div>
+</main>
+
+<!-- image zoom -->
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lb-close" id="lbClose" aria-label="Close">✕</button>
+  <img id="lbImg" alt="" />
+  <p class="lb-cap" id="lbCap"></p>
+</div>
+
+<script type="module" src="js/book.js"></script>
+</body>
+</html>

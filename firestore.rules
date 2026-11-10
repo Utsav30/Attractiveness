@@ -1,0 +1,54 @@
+rules_version = '2';
+
+// Paste this into: Firebase console -> Firestore Database -> Rules -> Publish
+//
+// What it guarantees:
+//   * a signed-in annotator can only read and write their OWN profile and
+//     their OWN responses;
+//   * nobody can see anybody else's ratings;
+//   * nobody can see the list of registered roll numbers;
+//   * a roll number can be claimed exactly once (create-only);
+//   * assignedBooks and rollNo cannot be edited after signup, so an annotator
+//     cannot swap themselves onto a different set of books.
+//
+// Your export script uses the Admin SDK, which bypasses these rules.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------------------------------------------------- roll-number claims
+    match /rolls/{rollNo} {
+      // Create succeeds only when the document does not already exist, so this
+      // is the duplicate-roll-number check. No read access at all.
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+      allow read, update, delete: if false;
+    }
+
+    // ------------------------------------------------------------- profiles
+    match /users/{uid} {
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list: if false;
+
+      allow create: if request.auth != null
+                    && request.auth.uid == uid
+                    && request.resource.data.uid == uid
+                    && request.resource.data.rollNo is string
+                    && request.resource.data.assignedBooks is list;
+
+      // Updates are for the progress summary only — identity and the assigned
+      // book set are frozen.
+      allow update: if request.auth != null
+                    && request.auth.uid == uid
+                    && request.resource.data.rollNo == resource.data.rollNo
+                    && request.resource.data.assignedBooks == resource.data.assignedBooks;
+
+      allow delete: if false;
+
+      // -------------------------------------------------------- the ratings
+      match /responses/{bookId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+  }
+}
