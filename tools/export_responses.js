@@ -73,6 +73,8 @@ const writeCsv = (file, header, rows) => {
       email: p.email,
       assigned_books: (ASSIGNMENTS[String(p.rollNo || "").toLowerCase()] || []).join(" "),
       books_complete: Object.values(p.progress || {}).filter((x) => x.complete).length,
+      submitted: !!(p.submitted && p.submitted.at),
+      submitted_at: p.submitted && p.submitted.at ? p.submitted.at.toDate().toISOString() : "",
       created_at: p.createdAt ? p.createdAt.toDate().toISOString() : "",
     });
 
@@ -128,7 +130,7 @@ const writeCsv = (file, header, rows) => {
 
   console.log("\nwriting:");
   writeCsv(path.join(outDir, "annotators.csv"),
-    ["uid","roll_no","name","gender","email","assigned_books","books_complete","created_at"], annotators);
+    ["uid","roll_no","name","gender","email","assigned_books","books_complete","submitted","submitted_at","created_at"], annotators);
   writeCsv(path.join(outDir, "original.csv"),
     ["uid","roll_no","gender","book_id","rating","confidence","reason","book_complete","updated_at"], original);
   writeCsv(path.join(outDir, "generated.csv"),

@@ -244,6 +244,30 @@ select.num.bad{border-color:var(--red);background:var(--red-soft)}
 .panel-status.ok{background:var(--green-soft);color:var(--green)}
 .panel-status.no{background:#eef1f6;color:var(--muted)}
 
+/* ------------------------------------------------------- final submit */
+.submit-box{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:20px;flex-wrap:wrap;margin-top:22px;
+}
+.submit-text{flex:1;min-width:260px}
+.submit-box h2{margin:0 0 4px}
+.submit-box .btn{align-self:center;min-width:150px}
+.submit-status{font-size:13.5px;margin:12px 0 0;padding:10px 12px;border-radius:9px}
+.submit-status.no{background:var(--red-soft);color:#9c2020;border:1px solid #f3c9c9}
+.submit-status.busy{background:#eaf0fd;color:var(--accent)}
+.submit-status ul{margin:8px 0 0;padding-left:20px}
+.submit-status li{margin-bottom:3px}
+
+/* ---------------------------------------------------- submitted page */
+.done-wrap{max-width:460px}
+.done-card{text-align:center;padding:32px 26px}
+.done-card h1{margin:0 0 6px}
+.done-card .btn{margin-top:18px;width:100%}
+.done-tick{
+  width:54px;height:54px;line-height:54px;border-radius:50%;margin:0 auto 14px;
+  background:var(--green-soft);color:var(--green);font-size:26px;font-weight:700;
+}
+
 /* ---------------------------------------------------------- lightbox */
 .lightbox{
   position:fixed;inset:0;background:rgba(18,22,32,.78);z-index:100;
