@@ -45,12 +45,17 @@ export function assignBooks(rollNo, pool, count) {
   const start = h % n;
 
   // Find a stride coprime with n, derived from the hash so it varies per user.
-  let stride = (h % (n - 1)) + 1;
-  for (let k = 0; k < n; k++) {
-    if (gcd(stride, n) === 1) break;
-    stride = (stride % (n - 1)) + 1;
+  // Guard n < 3: (h % (n - 1)) divides by zero when the pool holds one book,
+  // which yields NaN and indexes the pool out of bounds.
+  let stride = 1;
+  if (n > 2) {
+    stride = (h % (n - 1)) + 1;
+    for (let k = 0; k < n; k++) {
+      if (gcd(stride, n) === 1) break;
+      stride = (stride % (n - 1)) + 1;
+    }
+    if (gcd(stride, n) !== 1) stride = 1;
   }
-  if (gcd(stride, n) !== 1) stride = 1;
 
   const out = [];
   for (let i = 0; i < count; i++) {
