@@ -19,10 +19,18 @@ service cloud.firestore {
     // ---------------------------------------------------- roll-number claims
     match /rolls/{rollNo} {
       // Create succeeds only when the document does not already exist, so this
-      // is the duplicate-roll-number check. No read access at all.
+      // is the duplicate-roll-number check.
       allow create: if request.auth != null
                     && request.resource.data.uid == request.auth.uid;
-      allow read, update, delete: if false;
+
+      // You may read or release ONLY a claim that is already yours. Someone
+      // else's claim returns permission-denied, so the roll-number list still
+      // cannot be enumerated — but a signup that half-failed can clean up
+      // after itself instead of locking a roll number forever.
+      allow get, delete: if request.auth != null
+                         && resource.data.uid == request.auth.uid;
+
+      allow list, update: if false;
     }
 
     // ------------------------------------------------------------- profiles
@@ -43,7 +51,10 @@ service cloud.firestore {
                     && request.resource.data.rollNo == resource.data.rollNo
                     && request.resource.data.assignedBooks == resource.data.assignedBooks;
 
-      allow delete: if false;
+      // Lets a failed signup remove the profile it just wrote. Harmless: book
+      // assignment is derived from the roll number, so re-registering gives
+      // the same 21 books, and there is nothing to game by starting over.
+      allow delete: if request.auth != null && request.auth.uid == uid;
 
       // -------------------------------------------------------- the ratings
       match /responses/{bookId} {

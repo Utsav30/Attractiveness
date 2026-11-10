@@ -47,7 +47,40 @@ else stays the same.
 
 ---
 
+## Part 0 — Just look at it first (2 minutes, no Firebase, no images)
+
+The repo ships with `DEMO_MODE: true` in `js/config.js`. In that mode the portal
+needs **no Firebase project and no cover image files**: sign-ups and ratings are kept
+in your own browser's localStorage, and every cover is drawn on the fly as a coloured
+placeholder. A badge in the corner reminds you it is not live.
+
+**On your own machine:**
+
+```bash
+python -m http.server 8000
+# then open http://localhost:8000
+```
+
+Opening `index.html` by double-clicking will NOT work — the pages use ES modules, which
+browsers refuse to load over `file://`. You need the `http://` server above.
+
+**Or on GitHub Pages:** push the repo and follow Part B. The live URL shows the same
+demo.
+
+Either way: sign up with any roll number and any password (6+ characters), and you can
+walk the entire flow — 21 assigned books, the 15 prompt rows, the 76-cover panel,
+progress turning from red to green.
+
+**When you are ready to go live**, set `DEMO_MODE: false` in `js/config.js` and work
+through Parts A–D. Nothing collected in demo mode carries over, and it is not exportable
+— never run a real session with the flag on.
+
+---
+
 ## Part A — Create the Firebase project
+
+> Set `DEMO_MODE: false` in `js/config.js` before (or right after) this part — the
+> portal ignores Firebase entirely while the flag is on.
 
 **A1.** Go to <https://console.firebase.google.com> and sign in with your Google account.
 
@@ -63,7 +96,12 @@ Authentication and Firestore, both of which are free without a card.
 
 ### Turn on Authentication
 
-**A5.** Left sidebar → **Build** → **Authentication** → **Get started**.
+**A5.** In the left sidebar, open **Authentication** → **Get started**.
+
+> The sidebar is grouped by category and Firebase has renamed these groups over
+> time. In the current console Authentication sits under **Security**; older
+> layouts list it under **Build**. If you see neither, click **All products**
+> (or the ▸ next to a collapsed group) to expand the full list.
 
 **A6.** On the **Sign-in method** tab, click **Email/Password**.
 
@@ -72,7 +110,9 @@ Authentication and Firestore, both of which are free without a card.
 
 ### Create the database
 
-**A8.** Left sidebar → **Build** → **Firestore Database** → **Create database**.
+**A8.** In the left sidebar, open **Firestore** → **Create database**. It is grouped
+under **Databases & Storage** in the current console, and under **Build** in older
+layouts. It may be labelled either "Firestore" or "Firestore Database".
 
 **A9.** Pick a location. For users in India, `asia-south1` (Mumbai) gives the lowest
 latency. **This cannot be changed later.**
@@ -149,18 +189,43 @@ git push -u origin main
 
 ---
 
-## Part C — Connect Firebase to GitHub (the step people miss)
+## Part C — Tell Firebase about your GitHub Pages address
 
-**This is the one that breaks logins if you skip it.** Firebase refuses auth requests
-from domains it does not know.
+**There is no "connect to GitHub" button in Firebase, and you are not looking for one.**
+Nothing links the two services. Your site is a set of static files that GitHub Pages
+serves; Firebase only ever sees requests arriving from a browser. The single piece of
+wiring is this: Firebase keeps a list of web addresses allowed to use your project's
+sign-in, and your Pages address has to be on it. That is the whole of Part C — one entry
+added to one list.
 
-**C1.** Firebase console → **Build** → **Authentication** → **Settings** tab →
-**Authorized domains**.
+**Skip it and every login fails** with `auth/unauthorized-domain`, even though the keys
+and the rules are perfect.
+
+Two things must already be done or the screen below will not exist:
+
+* **Part A5–A7** — Authentication has to be started. Until you click **Get started** and
+  enable a provider, the Authentication section shows only a splash screen with no tabs
+  along the top, so there is no Settings tab to open.
+* **Part B** — GitHub Pages has to be switched on, because you need the address it
+  gives you before you can add it.
+
+**C1.** Firebase console → **Authentication** → **Settings** tab → **Authorized domains**.
+
+> Depending on your console version this list lives either on the **Settings** tab
+> or at the bottom of the **Sign-in method** tab. Check both — it is the same list.
 
 **C2.** Click **Add domain**.
 
 **C3.** Enter exactly `YOUR_USERNAME.github.io` — the **host only**: no `https://`,
 no repository path, no trailing slash. Click **Add**.
+
+If your Pages URL is `https://utsav.github.io/book-cover-study/`, the entry is
+`utsav.github.io` and nothing else. The repository name is deliberately not included;
+Firebase matches on host, so one entry covers every repo on your GitHub account.
+
+You should already see three entries in the list before you add yours: `localhost`,
+`PROJECT_ID.firebaseapp.com` and `PROJECT_ID.web.app`. If the list is empty or the page
+says Authentication is not set up, go back and finish Part A5–A7.
 
 **C4.** Confirm `localhost` is also in the list (it is there by default) so you can
 test on your own machine.
@@ -333,9 +398,11 @@ retry, and closing a tab with unsaved edits prompts.
 index.html          signup + login
 dashboard.html      21 books, red/green borders, progress
 book.html           Step 1 (15 prompt rows) + Step 2 (76-cover panel)
-js/config.js        all study knobs
+js/config.js        all study knobs, incl. DEMO_MODE
 js/firebase-config.js  <- paste your keys here
-js/firebase.js      Firebase init + auth guard
+js/backend.js       picks the backend from DEMO_MODE
+js/backend-firebase.js  live Firebase init + auth guard
+js/backend-demo.js  browser-only fake, for Part 0
 js/assign.js        roll-number -> 21 books
 js/model.js         response shape + completeness rules
 js/auth.js  js/dashboard.js  js/book.js
@@ -343,7 +410,42 @@ css/styles.css      light theme
 data/books.json     book pool (regenerate from your CSV)
 data/prompts.json   your 15 prompts
 firestore.rules     paste into the Firebase console
-tools/              books.json builder, placeholder images, CSV export
+tools/              books.json builder, placeholder images, CSV export,
+                    Drive -> images/ exporter
+```
+
+## Where the data lives, and how to inspect it
+
+Two separate stores, which is the thing that trips people up:
+
+**Accounts** live in **Authentication → Users**. That tab lists every account with its
+email, provider, created date, last sign-in and **User UID**. If an email is not in this
+list, no account exists for it and login will always say "wrong email or password".
+Forgotten password? The ⋮ menu at the end of a row has **Reset password**, and
+**Delete account**.
+
+**Study data** lives in **Firestore Database → Data**:
+
+| Path | Holds |
+|---|---|
+| `users/{uid}` | name, rollNo, gender, email, the 21 `assignedBooks`, `progress` |
+| `users/{uid}/responses/{bookId}` | every rating, rank, confidence and reason for that book |
+| `rolls/{rollNo}` | one document per claimed roll number, holding the `uid` that claimed it |
+
+The `uid` is what joins them: copy it from Authentication → Users and look up
+`users/{uid}` in Firestore.
+
+### Freeing a roll number
+
+Open **Firestore → Data → `rolls`**, click the document named after the roll number, and
+check its `uid` against Authentication → Users. If no account has that uid, the claim is
+orphaned — delete the document and the roll number is usable again.
+
+To sweep all of them at once:
+
+```bash
+node tools/fix_orphan_rolls.js --key serviceAccountKey.json        # report only
+node tools/fix_orphan_rolls.js --key serviceAccountKey.json --fix  # delete orphans
 ```
 
 ## Troubleshooting
@@ -356,4 +458,60 @@ tools/              books.json builder, placeholder images, CSV export
 | Blank page, console says CORS / module error | Opened via `file://` — serve over HTTP instead (Part E) |
 | Covers show "image missing" | Filename mismatch; run `python tools/make_books_json.py --csv …` to list what is missing |
 | Everyone gets identical books | Pool is 21 — add more books (D4) |
-| Signup says roll number already registered | It is; that is the rules doing their job. Delete the old `rolls/{rollNo}` doc to free it |
+| Ratings vanish on another device | `DEMO_MODE` is still `true` — demo data lives in one browser |
+| GitHub Pages shows a file list, or a 404 | The `.zip` was committed instead of its contents. `index.html` must sit at the repo root |
+| Signup says roll number already registered **and** login says wrong password | The roll belongs to a different email than the one you are typing, or it is an orphaned claim from a half-failed signup. See "Where the data lives" below |
+
+---
+
+## Appendix — why the cover images are not in Google Drive
+
+Drive is where your Colab job writes the covers, so it is the obvious place to serve
+them from. It does not work, and it is worth knowing why before you spend a day on it.
+
+**Direct image links are no longer reliable.** The old
+`drive.google.com/uc?export=view&id=…` pattern broke around January 2024 and now
+returns 403 for many files. The replacements people pass around — the `/thumbnail?id=`
+endpoint and the undocumented `lh3.googleusercontent.com/d/…` URL — are not documented
+APIs, and both are rate-limited: users report throttling on pages with as few as **ten**
+images, and "Too Many Requests" on the `lh3` pattern. The book page in this portal loads
+**76** images at once, and the final panel shows all 76 again. It would be throttled on
+the first page view.
+
+**The supported route is the Drive API**, and it is a poor fit here. A
+`files.get` with `alt=media` costs **200 quota units**, against 325,000 units per minute
+per user, so quota alone is survivable. But every image becomes a separate authenticated
+API round-trip with no CDN in front and no useful browser caching, you have to ship an
+API key or an access token in client-side JavaScript, and a page of 76 covers will feel
+slow enough that annotators start rating how long the page took instead of the artwork.
+
+**What to do instead:** export once from Drive into static files, and serve those.
+In Colab, Drive is a mounted folder, so this needs no API at all:
+
+```python
+from google.colab import drive
+drive.mount('/content/drive')
+```
+
+```bash
+!python export_covers_from_drive.py \
+    --src "/content/drive/MyDrive/YOUR_COVERS_FOLDER" \
+    --pattern "(?P<book>[^/]+)/(?P<prompt>p\d+)_(?P<cover>c\d)\.(png|jpg)" \
+    --dry-run
+```
+
+`--dry-run` prints what it matched, what it skipped, and which books do not have exactly
+76 files — run it first, every time. Adjust `--pattern` until the preview is right, then
+re-run without the flag. It renames everything into the `images/<book>/<prompt>_c<n>.jpg`
+layout the portal expects and re-encodes to JPEG at 800px tall (roughly 60–90 KB each),
+which is the difference between an image set that fits in a Git repo and one that does not.
+
+Then either commit `images/` to the repo, or push it to a
+[Hugging Face dataset](https://huggingface.co/new-dataset) and set
+`IMAGE_BASE: "https://huggingface.co/datasets/USER/REPO/resolve/main"` in `js/config.js`.
+Both are CDN-backed and free. Drive stays as your working copy and your backup — it just
+should not be the thing 30 annotators hit simultaneously.
+
+**Google sign-in does not need Drive access.** Signing in with Google proves who someone
+is; reading files from Drive is a separate OAuth scope you would have to request, and a
+consent screen annotators would have to approve. The portal asks for identity only.

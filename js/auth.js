@@ -3,9 +3,9 @@ import { assignBooks } from "./assign.js";
 import {
   auth, db,
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  deleteUser, onAuthStateChanged, doc, setDoc, serverTimestamp,
+  deleteUser, onAuthStateChanged, doc, setDoc, deleteDoc, serverTimestamp,
   friendlyAuthError,
-} from "./firebase.js";
+} from "./backend.js";
 
 document.getElementById("studyName").textContent = CONFIG.STUDY_NAME;
 
@@ -84,7 +84,7 @@ signupForm.onsubmit = async (e) => {
 
   btn.disabled = true; btn.textContent = "Creating…";
   signingUp = true;
-  let cred = null;
+  let cred = null, profileWritten = false;
   try {
     // 1. Load the book pool and work out this person's books.
     const pool = await fetch("data/books.json").then((r) => r.json());
@@ -94,22 +94,7 @@ signupForm.onsubmit = async (e) => {
     cred = await createUserWithEmailAndPassword(auth, email, password);
     const uid = cred.user.uid;
 
-    // 3. Claim the roll number. Security rules allow *create* only, so if the
-    //    document already exists this write is rejected — that is the
-    //    duplicate check, done server-side without exposing the roll list.
-    try {
-      await setDoc(doc(db, "rolls", rollNo), { uid, createdAt: serverTimestamp() });
-    } catch (claimErr) {
-      console.error(claimErr);
-      await deleteUser(cred.user).catch(() => {});
-      cred = null;
-      signingUp = false;
-      btn.disabled = false; btn.textContent = "Create account";
-      return showError(signupError,
-        "That roll number is already registered. Log in with the original account instead.");
-    }
-
-    // 4. Profile document. Books are frozen at signup, so editing the pool
+    // 3. Profile document. Books are frozen at signup, so editing the pool
     //    later never reshuffles an annotator mid-study.
     await setDoc(doc(db, "users", uid), {
       uid, name, rollNo, gender, email,
@@ -117,14 +102,32 @@ signupForm.onsubmit = async (e) => {
       progress: {},
       createdAt: serverTimestamp(),
     });
+    profileWritten = true;
+
+    // 4. Claim the roll number LAST. Security rules allow create only, so this
+    //    fails if the roll is taken — that is the duplicate check, done
+    //    server-side without exposing the roll list.
+    //
+    //    Claiming last matters: if an earlier step fails we have not reserved
+    //    anything, so a half-finished signup can never leave a roll number
+    //    locked against a real person.
+    await setDoc(doc(db, "rolls", rollNo), { uid, createdAt: serverTimestamp() });
 
     signingUp = false;
     location.replace("dashboard.html");
   } catch (err) {
     console.error(err);
+    // Roll back everything this attempt created, so retrying is clean.
+    if (profileWritten && cred) await deleteDoc(doc(db, "users", cred.user.uid)).catch(() => {});
     if (cred) await deleteUser(cred.user).catch(() => {});
     signingUp = false;
-    showError(signupError, friendlyAuthError(err));
     btn.disabled = false; btn.textContent = "Create account";
+
+    const taken = err && (err.code === "permission-denied" ||
+                          /insufficient permissions/i.test(err.message || ""));
+    showError(signupError, taken
+      ? "That roll number is already registered to another account. " +
+        "Log in with the email you first used, or ask the study owner to free it."
+      : friendlyAuthError(err));
   }
 };

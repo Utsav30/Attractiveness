@@ -2,7 +2,7 @@ import { CONFIG, originalUrl, generatedUrl, coverUrl } from "./config.js";
 import { emptyResponse, hydrate, rowDone, panelDone, originalDone, progressOf } from "./model.js";
 import {
   requireAuth, db, doc, getDoc, setDoc, updateDoc, serverTimestamp,
-} from "./firebase.js";
+} from "./backend.js";
 
 // --------------------------------------------------------------- bootstrap
 const bookId = new URLSearchParams(location.search).get("id");

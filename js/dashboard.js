@@ -1,5 +1,5 @@
 import { CONFIG, originalUrl } from "./config.js";
-import { requireAuth, auth, signOut } from "./firebase.js";
+import { requireAuth, auth, signOut } from "./backend.js";
 
 const { profile } = await requireAuth();
 
