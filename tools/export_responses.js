@@ -101,7 +101,10 @@ const writeCsv = (file, header, rows) => {
             rating: rating ?? "",
             rank_in_row: row.ranks?.[cover] ?? "",
             row_confidence: row.confidence ?? "",
-            row_reason: row.reason ?? "",
+            // split in two; `reason` is the pre-split field, kept so older
+            // responses still export rather than coming back blank
+            row_reason_rating: row.reasonRating ?? row.reason ?? "",
+            row_reason_rank: row.reasonRank ?? "",
             updated_at: updated,
           });
         }
@@ -128,7 +131,7 @@ const writeCsv = (file, header, rows) => {
   writeCsv(path.join(outDir, "original.csv"),
     ["uid","roll_no","gender","book_id","rating","confidence","book_complete","updated_at"], original);
   writeCsv(path.join(outDir, "generated.csv"),
-    ["uid","roll_no","gender","book_id","prompt_id","cover_id","cover_index","rating","rank_in_row","row_confidence","row_reason","updated_at"], generated);
+    ["uid","roll_no","gender","book_id","prompt_id","cover_id","cover_index","rating","rank_in_row","row_confidence","row_reason_rating","row_reason_rank","updated_at"], generated);
   writeCsv(path.join(outDir, "panel.csv"),
     ["uid","roll_no","gender","book_id","panel_rank","cover_id","is_original","panel_confidence","panel_reason","updated_at"], panel);
 

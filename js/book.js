@@ -22,11 +22,79 @@ if (!allowed.includes(bookId)) {
   await new Promise(() => {});
 }
 
-const [books, prompts] = await Promise.all([
-  fetch("data/books.json").then((r) => r.json()),
-  fetch("data/prompts.json").then((r) => r.json()),
-]);
-const book = books.find((b) => b.id === bookId) || { id: bookId, title: bookId };
+/**
+ * Load a JSON file and explain itself when it cannot. A missing or malformed
+ * data file used to throw during module evaluation, which leaves a blank page
+ * and no clue — the same failure mode assignments.json had.
+ */
+async function loadJson(path) {
+  let res;
+  try {
+    res = await fetch(path, { cache: "no-store" });
+  } catch (e) {
+    throw new Error(`Could not load ${path} (${e.message}).`);
+  }
+  if (!res.ok) {
+    throw new Error(
+      `${path} was not found (HTTP ${res.status}). It must sit next to ` +
+      `data/books.json in the repo.`
+    );
+  }
+  try {
+    return JSON.parse(await res.text());
+  } catch (e) {
+    throw new Error(
+      `${path} is not valid JSON — ${e.message}. Remember: no // comments, ` +
+      `no trailing commas, double quotes only.`
+    );
+  }
+}
+
+function fatal(message) {
+  const box = document.createElement("div");
+  box.style.cssText =
+    "max-width:620px;margin:40px auto;background:#fff;border:1px solid #e3e6ec;" +
+    "border-radius:12px;padding:24px;box-shadow:0 6px 18px rgba(20,25,40,.06);" +
+    "font:15px/1.6 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif";
+  box.innerHTML =
+    `<h1 style="margin:0 0 10px;font-size:19px">This book cannot be shown</h1>
+     <p style="margin:0 0 16px;color:#9c2020;background:#fdecec;border:1px solid #f3c9c9;
+        border-radius:9px;padding:10px 12px">${message}</p>
+     <p style="margin:0"><a href="dashboard.html">&larr; Back to your books</a></p>`;
+  const main = document.querySelector("main.page") || document.body;
+  main.innerHTML = "";
+  main.appendChild(box);
+  throw new Error(message);
+}
+
+let books, prompts;
+try {
+  [books, prompts] = await Promise.all([
+    loadJson("data/books.json"),
+    loadJson("data/prompts.json"),
+  ]);
+} catch (e) {
+  fatal(e.message);
+}
+
+if (!Array.isArray(prompts) || !prompts.length) {
+  fatal("data/prompts.json must be a non-empty array of " +
+        '{ "id": "p01", "text": "…" } entries, one per prompt row.');
+}
+const badPrompt = prompts.find((p) => !p || typeof p.id !== "string" || !p.id);
+if (badPrompt) {
+  fatal('Every entry in data/prompts.json needs a string "id" such as "p01". ' +
+        `Found: ${JSON.stringify(badPrompt)}`);
+}
+if (!Array.isArray(books)) {
+  fatal("data/books.json must be an array of book objects.");
+}
+
+const book = books.find((b) => b && b.id === bookId);
+if (!book) {
+  fatal(`"${bookId}" is listed in data/assignments.json but there is no book ` +
+        `with that id in data/books.json. The ids must match exactly.`);
+}
 
 const respRef = doc(db, "users", user.uid, "responses", bookId);
 const stored = await getDoc(respRef);
@@ -222,18 +290,30 @@ function renderRows() {
     }));
     foot.appendChild(fc);
 
-    const fr = el("div", "field grow");
-    fr.appendChild(el("label", null, "Why did you rate and rank them this way?"));
-    const ta = el("textarea");
-    ta.rows = 2;
-    ta.placeholder = "e.g. Cover 3 reads clearly at thumbnail size; covers 1 and 4 have muddy typography…";
-    ta.value = row.reason || "";
-    ta.oninput = () => { row.reason = ta.value; markDirty(); refreshRow(p.id); refreshStatus(); };
-    fr.appendChild(ta);
-    foot.appendChild(fr);
+    // Two separate boxes: the scores and the ordering are different judgements
+    // and people explain them differently.
+    const reasonBox = (label, key, placeholder) => {
+      const f = el("div", "field grow");
+      f.appendChild(el("label", null, label));
+      const ta = el("textarea");
+      ta.rows = 2;
+      ta.placeholder = placeholder;
+      ta.value = row[key] || "";
+      ta.oninput = () => { row[key] = ta.value; markDirty(); refreshRow(p.id); refreshStatus(); };
+      f.appendChild(ta);
+      return f;
+    };
+
+    foot.appendChild(reasonBox(
+      "Why did you rate them this way?", "reasonRating",
+      "e.g. Cover 3 reads clearly at thumbnail size; covers 1 and 4 have muddy typography…"));
+
+    foot.appendChild(reasonBox(
+      "Why did you rank them this way?", "reasonRank",
+      "e.g. I put 3 first because the title is legible before anything else draws the eye…"));
 
     card.appendChild(foot);
-    card.appendChild(el("p", "rank-warn", "Each rank 1–" + CONFIG.COVERS_PER_PROMPT + " must be used exactly once."));
+    card.appendChild(el("p", "rank-warn", "This row has a duplicate rank saved from an earlier version — pick each rank 1–" + CONFIG.COVERS_PER_PROMPT + " once."));
     pane.appendChild(card);
   });
 
@@ -245,13 +325,26 @@ function refreshRow(promptId) {
   const card = document.getElementById("row-" + promptId);
   if (!card) return;
 
-  // duplicate rank highlighting
+  // A rank chosen on one cover is greyed out on the others, so a row can only
+  // ever hold a true 1..N permutation.
+  const used = new Set(
+    Object.values(row.ranks).filter((v) => v != null && v !== "").map(String)
+  );
   const counts = {};
   Object.values(row.ranks).forEach((v) => { if (v) counts[v] = (counts[v] || 0) + 1; });
   let dup = false;
+
   card.querySelectorAll("select.rank").forEach((s) => {
-    const v = row.ranks[s.dataset.key];
-    const bad = v && counts[v] > 1;
+    const mine = row.ranks[s.dataset.key];
+    for (const opt of s.options) {
+      // never disable the blank option, or the cover's own current rank
+      opt.disabled = opt.value !== "" &&
+                     used.has(opt.value) &&
+                     String(mine) !== opt.value;
+    }
+    // Duplicates are unreachable through the UI now, but responses saved before
+    // this change may still contain them, so keep flagging them.
+    const bad = mine && counts[mine] > 1;
     s.classList.toggle("bad", !!bad);
     if (bad) dup = true;
   });

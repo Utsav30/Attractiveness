@@ -13,7 +13,11 @@ export function emptyResponse(prompts) {
       ratings["c" + i] = null;
       ranks["c" + i] = null;
     }
-    rows[p.id] = { ratings, ranks, confidence: null, reason: "" };
+    rows[p.id] = {
+      ratings, ranks, confidence: null,
+      reasonRating: "",   // why these scores
+      reasonRank: "",     // why this ordering
+    };
   }
   return {
     original: { rating: null, confidence: null },
@@ -35,7 +39,12 @@ export function hydrate(stored, prompts) {
       if (s.ratings) Object.assign(t.ratings, s.ratings);
       if (s.ranks) Object.assign(t.ranks, s.ranks);
       if (s.confidence != null) t.confidence = s.confidence;
-      if (typeof s.reason === "string") t.reason = s.reason;
+      if (typeof s.reasonRating === "string") t.reasonRating = s.reasonRating;
+      if (typeof s.reasonRank === "string") t.reasonRank = s.reasonRank;
+      // Responses saved before the box was split carry a single `reason`.
+      // Keep that text rather than losing it: it was written about the scores.
+      if (typeof s.reason === "string" && s.reason && !t.reasonRating)
+        t.reasonRating = s.reason;
     }
   }
   if (stored.panel) {
@@ -65,7 +74,8 @@ export function rowDone(row) {
   if (set.size !== n) return false;
   for (let i = 1; i <= n; i++) if (!set.has(i)) return false;
   if (!filled(row.confidence)) return false;
-  if (!row.reason || !row.reason.trim()) return false;
+  if (!row.reasonRating || !row.reasonRating.trim()) return false;
+  if (!row.reasonRank || !row.reasonRank.trim()) return false;
   return true;
 }
 
