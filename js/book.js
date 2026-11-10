@@ -337,8 +337,9 @@ function refreshRow(promptId) {
   const card = document.getElementById("row-" + promptId);
   if (!card) return;
 
-  // A rank chosen on one cover is greyed out on the others, so a row can only
-  // ever hold a true 1..N permutation.
+  // A rank chosen on one cover is removed from the other dropdowns, so a row
+  // can only ever hold a true 1..N permutation and the remaining choices are
+  // the only ones shown.
   const used = new Set(
     Object.values(row.ranks).filter((v) => v != null && v !== "").map(String)
   );
@@ -346,18 +347,31 @@ function refreshRow(promptId) {
   Object.values(row.ranks).forEach((v) => { if (v) counts[v] = (counts[v] || 0) + 1; });
   let dup = false;
 
-  card.querySelectorAll("select.rank").forEach((s) => {
-    const mine = row.ranks[s.dataset.key];
-    for (const opt of s.options) {
-      // never disable the blank option, or the cover's own current rank
-      opt.disabled = opt.value !== "" &&
-                     used.has(opt.value) &&
-                     String(mine) !== opt.value;
+  card.querySelectorAll("select.rank").forEach((sel) => {
+    const mine = row.ranks[sel.dataset.key];
+    const mineStr = mine == null ? "" : String(mine);
+
+    // Build the list this dropdown should offer: the blank placeholder, this
+    // cover's own current rank, and any rank no other cover has taken.
+    const wanted = [""];
+    for (let i = 1; i <= CONFIG.COVERS_PER_PROMPT; i++) {
+      const v = String(i);
+      if (!used.has(v) || v === mineStr) wanted.push(v);
     }
-    // Duplicates are unreachable through the UI now, but responses saved before
+
+    // Only touch the DOM when the list actually differs, so reopening a
+    // dropdown does not fight with the rebuild.
+    const current = [...sel.options].map((o) => o.value);
+    if (current.join(",") !== wanted.join(",")) {
+      sel.innerHTML = "";
+      for (const v of wanted) sel.appendChild(new Option(v === "" ? "–" : v, v));
+    }
+    sel.value = mineStr;
+
+    // Duplicates cannot be produced through the UI, but responses saved before
     // this change may still contain them, so keep flagging them.
     const bad = mine && counts[mine] > 1;
-    s.classList.toggle("bad", !!bad);
+    sel.classList.toggle("bad", !!bad);
     if (bad) dup = true;
   });
   card.querySelector(".rank-warn").style.display = dup ? "block" : "none";
