@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Your books — Book Cover Study</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div>
+      <strong id="brand">Book Cover Study</strong>
+      <span class="muted" id="whoami"></span>
+    </div>
+    <div class="topbar-actions">
+      <span class="legend"><i class="dot green"></i> complete</span>
+      <span class="legend"><i class="dot red"></i> incomplete</span>
+      <button class="btn ghost" id="logoutBtn">Log out</button>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  <h1>Your assigned books</h1>
+  <p class="muted" id="subline">Loading…</p>
+
+  <div class="overall">
+    <div class="bar"><span id="overallBar"></span></div>
+    <span class="muted" id="overallText"></span>
+  </div>
+
+  <section class="grid" id="grid"></section>
+</main>
+
+<script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

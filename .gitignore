@@ -1,0 +1,7 @@
+# never commit the Admin SDK key
+*serviceAccount*.json
+serviceAccountKey.json
+
+export/
+node_modules/
+.DS_Store
