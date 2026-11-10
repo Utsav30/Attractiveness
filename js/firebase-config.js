@@ -7,10 +7,10 @@
 // ---------------------------------------------------------------------------
 
 export const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY",
-  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "PASTE_SENDER_ID",
-  appId: "PASTE_APP_ID",
+  apiKey: "AIzaSyDOwo8TpltgBgyr073njoqSM0Y7Rduxz4w",
+  authDomain: "book-attractiveness.firebaseapp.com",
+  projectId: "book-attractiveness",
+  storageBucket: "book-attractiveness.firebasestorage.app",
+  messagingSenderId: "759670157229",
+  appId: "1:759670157229:web:4058d2fc0dfa5a8a65bb24"
 };

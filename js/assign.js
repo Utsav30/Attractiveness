@@ -23,6 +23,11 @@ function gcd(a, b) {
   return a;
 }
 
+/** Books available for assignment: anything not explicitly switched off. */
+export function activeBooks(pool) {
+  return pool.filter((b) => b && b.id && b.active !== false);
+}
+
 /**
  * Pick `count` distinct books out of `pool` using a rotation with a stride that
  * is coprime to the pool size. Guarantees no duplicates when count <= pool.
@@ -52,4 +57,34 @@ export function assignBooks(rollNo, pool, count) {
     out.push(pool[(start + i * stride) % n].id);
   }
   return out;
+}
+
+/**
+ * Resolve one annotator's book list.
+ *
+ * If data/assignments.json names this roll number, that list wins — use it when
+ * you want to control coverage yourself (balanced blocks, a pilot subset,
+ * deliberate overlap for inter-annotator agreement). Otherwise fall back to the
+ * deterministic rotation above.
+ *
+ * `explicit` is the parsed assignments.json: { "<rollNo>": ["b001", ...] }.
+ */
+export function assignBooksFor(rollNo, pool, count, explicit) {
+  const roll = String(rollNo).trim().toLowerCase();
+  const listed = explicit && explicit[roll];
+
+  if (Array.isArray(listed) && listed.length) {
+    const known = new Set(pool.map((b) => b.id));
+    const missing = listed.filter((id) => !known.has(id));
+    if (missing.length) {
+      throw new Error(
+        `data/assignments.json gives ${roll} book ids that are not in ` +
+        `data/books.json: ${missing.slice(0, 5).join(", ")}` +
+        (missing.length > 5 ? ` (+${missing.length - 5} more)` : "")
+      );
+    }
+    return [...new Set(listed)];
+  }
+
+  return assignBooks(roll, pool, count);
 }

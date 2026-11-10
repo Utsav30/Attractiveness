@@ -1,5 +1,5 @@
 import { CONFIG } from "./config.js";
-import { assignBooks } from "./assign.js";
+import { assignBooksFor, activeBooks } from "./assign.js";
 import {
   auth, db,
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
@@ -86,9 +86,19 @@ signupForm.onsubmit = async (e) => {
   signingUp = true;
   let cred = null, profileWritten = false;
   try {
-    // 1. Load the book pool and work out this person's books.
-    const pool = await fetch("data/books.json").then((r) => r.json());
-    const assignedBooks = assignBooks(rollNo, pool, CONFIG.BOOKS_PER_USER);
+    // 1. Work out this person's books.
+    //    data/assignments.json wins if it names this roll number; otherwise the
+    //    roll number is hashed into a balanced slice of data/books.json.
+    const [pool, overrides] = await Promise.all([
+      fetch("data/books.json").then((r) => r.json()),
+      fetch("data/assignments.json")
+        .then((r) => (r.ok ? r.json() : {}))
+        .catch(() => ({})),
+    ]);
+
+    const assignedBooks = assignBooksFor(
+      rollNo, activeBooks(pool), CONFIG.BOOKS_PER_USER, overrides
+    );
 
     // 2. Create the auth account.
     cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -96,12 +106,19 @@ signupForm.onsubmit = async (e) => {
 
     // 3. Profile document. Books are frozen at signup, so editing the pool
     //    later never reshuffles an annotator mid-study.
-    await setDoc(doc(db, "users", uid), {
-      uid, name, rollNo, gender, email,
-      assignedBooks,
-      progress: {},
-      createdAt: serverTimestamp(),
-    });
+    //
+    //    Each write is tagged with the step it belongs to. Both steps can fail
+    //    with permission-denied for completely different reasons, and reporting
+    //    the wrong one sends people hunting for a duplicate roll number when
+    //    the real problem is that firestore.rules was never published.
+    try {
+      await setDoc(doc(db, "users", uid), {
+        uid, name, rollNo, gender, email,
+        assignedBooks,
+        progress: {},
+        createdAt: serverTimestamp(),
+      });
+    } catch (e) { e.stage = "profile"; throw e; }
     profileWritten = true;
 
     // 4. Claim the roll number LAST. Security rules allow create only, so this
@@ -111,7 +128,9 @@ signupForm.onsubmit = async (e) => {
     //    Claiming last matters: if an earlier step fails we have not reserved
     //    anything, so a half-finished signup can never leave a roll number
     //    locked against a real person.
-    await setDoc(doc(db, "rolls", rollNo), { uid, createdAt: serverTimestamp() });
+    try {
+      await setDoc(doc(db, "rolls", rollNo), { uid, createdAt: serverTimestamp() });
+    } catch (e) { e.stage = "roll"; throw e; }
 
     signingUp = false;
     location.replace("dashboard.html");
@@ -123,11 +142,22 @@ signupForm.onsubmit = async (e) => {
     signingUp = false;
     btn.disabled = false; btn.textContent = "Create account";
 
-    const taken = err && (err.code === "permission-denied" ||
-                          /insufficient permissions/i.test(err.message || ""));
-    showError(signupError, taken
-      ? "That roll number is already registered to another account. " +
-        "Log in with the email you first used, or ask the study owner to free it."
-      : friendlyAuthError(err));
+    const denied = err && (err.code === "permission-denied" ||
+                           /insufficient permissions/i.test(err.message || ""));
+
+    let msg;
+    if (denied && err.stage === "roll") {
+      msg = "That roll number is already registered to another account. " +
+            "Log in with the email you first used, or ask the study owner to free it.";
+    } else if (denied && err.stage === "profile") {
+      // Nothing to do with roll numbers: Firestore refused the very first
+      // write, which almost always means the rules were never published.
+      msg = "Firestore refused to save your profile. In the Firebase console open " +
+            "Firestore Database > Rules, replace everything with the contents of " +
+            "firestore.rules from this repo, and click Publish. Then try again.";
+    } else {
+      msg = friendlyAuthError(err);
+    }
+    showError(signupError, msg);
   }
 };
