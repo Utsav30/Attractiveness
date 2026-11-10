@@ -28,8 +28,7 @@ const progress = profile.progress || {};
 const subline = document.getElementById("subline");
 if (assigned.length) {
   subline.textContent =
-    `${assigned.length} book${assigned.length === 1 ? "" : "s"} assigned to ` +
-    `${profile.rollNo}. Click a cover to start rating.`;
+    `${profile.rollNo}. Click a cover image to start.`;
 } else {
   // Say exactly which of the three failure modes this is.
   subline.textContent = plan.problem
