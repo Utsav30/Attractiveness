@@ -106,6 +106,15 @@ export const deleteUser = async (user) => {
   save(s);
 };
 
+// Demo mode has no email. Report whether the address exists so the link can
+// still be exercised, and surface the password in the console for testing.
+export const sendPasswordResetEmail = async (_a, email) => {
+  const s = store();
+  const c = s.creds[email];
+  if (!c) { const e = new Error("no such user"); e.code = "auth/user-not-found"; throw e; }
+  console.info(`DEMO MODE: no email sent. The password for ${email} is "${c.password}".`);
+};
+
 export const onAuthStateChanged = (_a, cb) => {
   setTimeout(() => cb(store().currentUser || null), 0);
   return () => {};

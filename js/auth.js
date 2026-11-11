@@ -3,7 +3,7 @@ import {
   auth, db,
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
   deleteUser, onAuthStateChanged, doc, setDoc, deleteDoc, serverTimestamp,
-  friendlyAuthError,
+  sendPasswordResetEmail, friendlyAuthError,
 } from "./backend.js";
 
 document.getElementById("studyName").textContent = CONFIG.STUDY_NAME;
@@ -50,6 +50,55 @@ loginForm.onsubmit = async (e) => {
   } catch (err) {
     showError(loginError, friendlyAuthError(err));
     btn.disabled = false; btn.textContent = "Log in";
+  }
+};
+
+// --------------------------- forgot password -----------------------------
+// Built from JS and appended to the login form, so index.html needs no edit.
+const forgot = document.createElement("p");
+forgot.style.cssText = "margin:-4px 0 0;text-align:right;font-size:12.5px";
+forgot.innerHTML = '<a href="#" id="forgotLink">Forgot password?</a>';
+loginForm.appendChild(forgot);
+
+document.getElementById("forgotLink").onclick = async (e) => {
+  e.preventDefault();
+  clearError(loginError);
+
+  const email = document.getElementById("loginEmail").value.trim();
+  if (!email) {
+    document.getElementById("loginEmail").focus();
+    return showError(loginError,
+      "Type your email address in the box above first, then click this again.");
+  }
+
+  const link = document.getElementById("forgotLink");
+  link.textContent = "Sending…";
+  try {
+    await sendPasswordResetEmail(auth, email);
+    // Deliberately the same message whether or not the address is registered:
+    // a different one would let anyone test which emails have accounts.
+    link.textContent = "Forgot password?";
+    loginError.textContent =
+      `If ${email} has an account, a reset link is on its way. ` +
+      `It can take a minute, and it often lands in spam.`;
+    loginError.className = "error ok-note";
+    loginError.style.cssText =
+      "background:#e8f6ed;color:#1f6b42;border-color:#bfe3cd";
+    loginError.hidden = false;
+  } catch (err) {
+    link.textContent = "Forgot password?";
+    loginError.style.cssText = "";
+    loginError.className = "error";
+    // user-not-found is hidden for the same reason as above.
+    if (err && err.code === "auth/user-not-found") {
+      loginError.textContent =
+        `If ${email} has an account, a reset link is on its way.`;
+      loginError.style.cssText =
+        "background:#e8f6ed;color:#1f6b42;border-color:#bfe3cd";
+      loginError.hidden = false;
+    } else {
+      showError(loginError, friendlyAuthError(err));
+    }
   }
 };
 

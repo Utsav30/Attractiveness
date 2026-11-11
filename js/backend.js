@@ -97,6 +97,7 @@ export const signInWithEmailAndPassword = impl.signInWithEmailAndPassword;
 export const signOut = impl.signOut;
 export const deleteUser = impl.deleteUser;
 export const onAuthStateChanged = impl.onAuthStateChanged;
+export const sendPasswordResetEmail = impl.sendPasswordResetEmail;
 export const doc = impl.doc;
 export const getDoc = impl.getDoc;
 export const setDoc = impl.setDoc;
