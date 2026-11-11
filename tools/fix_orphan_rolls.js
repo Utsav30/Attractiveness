@@ -27,10 +27,32 @@ Firebase console -> Project settings -> Service accounts -> Generate new private
   process.exit(1);
 }
 
-const admin = require("firebase-admin");
-admin.initializeApp({ credential: admin.credential.cert(require(path.resolve(keyPath))) });
-const db = admin.firestore();
-const auth = admin.auth();
+// firebase-admin v14 removed the old `admin.credential` / `admin.firestore()`
+// namespace API, so load the modular entry points and fall back to the legacy
+// namespace for anyone still on v9 or earlier.
+let initializeApp, cert, getFirestore, getAuth;
+try {
+  ({ initializeApp, cert } = require("firebase-admin/app"));
+  ({ getFirestore } = require("firebase-admin/firestore"));
+  ({ getAuth } = require("firebase-admin/auth"));
+} catch {
+  const admin = require("firebase-admin");
+  if (!admin.credential) {
+    console.error(
+      "This copy of firebase-admin exposes neither the modular nor the legacy API.\n" +
+      "Reinstall it with:  npm install firebase-admin"
+    );
+    process.exit(1);
+  }
+  initializeApp = admin.initializeApp;
+  cert = admin.credential.cert;
+  getFirestore = () => admin.firestore();
+  getAuth = () => admin.auth();
+}
+
+initializeApp({ credential: cert(require(path.resolve(keyPath))) });
+const db = getFirestore();
+const auth = getAuth();
 
 (async () => {
   const rolls = await db.collection("rolls").get();
