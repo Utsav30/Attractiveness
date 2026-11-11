@@ -72,6 +72,21 @@ document.getElementById("forgotLink").onclick = async (e) => {
   }
 
   const link = document.getElementById("forgotLink");
+
+  // The reset helper travels through three files. If any one of them is an
+  // older copy the import resolves to undefined, and "x is not a function"
+  // says nothing about which file to update — so name them.
+  if (typeof sendPasswordResetEmail !== "function") {
+    // If js/backend.js were the stale file this module would not have loaded
+    // at all (a missing named export is a link-time error), so the culprit is
+    // whichever backend js/backend.js is forwarding to.
+    const culprit = CONFIG.DEMO_MODE ? "js/backend-demo.js" : "js/backend-firebase.js";
+    return showError(loginError,
+      `Password reset is not wired up yet: ${culprit} is still the old copy. ` +
+      `Replace it (and js/backend.js, js/auth.js, and the other backend file), ` +
+      `push, then hard-refresh with Ctrl+Shift+R.`);
+  }
+
   link.textContent = "Sending…";
   try {
     await sendPasswordResetEmail(auth, email);
