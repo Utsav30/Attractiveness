@@ -33,9 +33,10 @@ if (assigned.length) {
   // Say exactly which of the three failure modes this is.
   subline.textContent = plan.problem
     ? plan.problem
-    : `Roll number "${profile.rollNo}" is not listed in data/assignments.json. ` +
-      `The file lists ${plan.rolls.length} roll number(s); add yours as a ` +
-      `lowercase key, e.g. {"${profile.rollNo}": ["b0001"]}.`;
+    : `No Task assing to you. Contact TAs.`
+    // : `Roll number "${profile.rollNo}" is not listed in data/assignments.json. ` +
+    //   `The file lists ${plan.rolls.length} roll number(s); add yours as a ` +
+    //   `lowercase key, e.g. {"${profile.rollNo}": ["b0001"]}.`;
   subline.className = "error";
 }
 
