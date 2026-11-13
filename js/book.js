@@ -213,7 +213,7 @@ function renderHead() {
   // Blurb / description, straight from data/books.json. Accepts either key
   // name, and renders paragraphs separated by a blank line. Styled inline so
   // this needs no change to css/styles.css.
-  const blurb = String(book.description ?? book.blurb ?? "").trim();
+  const blurb = String(book.blurb ?? "").trim();
   if (blurb) {
     const box = el("div", "book-blurb");
     box.style.cssText =
