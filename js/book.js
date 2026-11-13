@@ -209,11 +209,14 @@ function renderHead() {
   const right = el("div", "head-info");
   right.appendChild(el("h1", null, esc(book.title)));
   right.appendChild(el("p", "muted",
-    `<strong>Author:</strong> ${esc(book.author)} &nbsp;·&nbsp; <strong>Genre:</strong> ${esc(book.genre)} &nbsp;·&nbsp; <strong>ID:</strong> ${esc(book.id)}`));
+    `<strong>Author:</strong> ${esc(book.author)} &nbsp;·&nbsp;`)); 
+  right.appendChild(el("p", "muted", `<strong>Genre:</strong> ${esc(book.genre)} &nbsp;·&nbsp;`));
+   right.appendChild(el("p", "muted", `<strong>ID:</strong> ${esc(book.id)}`));
   // Blurb / description, straight from data/books.json. Accepts either key
   // name, and renders paragraphs separated by a blank line. Styled inline so
   // this needs no change to css/styles.css.
   const blurb = String(book.blurb ?? "").trim();
+  console.warn(blurb);
   if (blurb) {
     const box = el("div", "book-blurb");
     box.style.cssText =
