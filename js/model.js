@@ -94,7 +94,7 @@ export function panelDone(panel) {
 /** Returns {done, total, pct, complete} for a single book. */
 export function progressOf(r, prompts) {
   let done = 0;
-  const total = 1 + prompts.length; // original + 15 rows + panel
+  const total = 1 + prompts.length + 1; // original + 15 rows + panel
   if (originalDone(r)) done++;
   for (const p of prompts) if (rowDone(r.rows[p.id])) done++;
   if (panelDone(r.panel)) done++;
