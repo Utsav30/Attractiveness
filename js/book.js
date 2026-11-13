@@ -208,10 +208,25 @@ function renderHead() {
 
   const right = el("div", "head-info");
   right.appendChild(el("h1", null, esc(book.title)));
-  right.appendChild(el("p", "muted",
-    `<strong>Author:</strong> ${esc(book.author)} &nbsp;·&nbsp;`)); 
-  right.appendChild(el("p", "muted", `<strong>Genre:</strong> ${esc(book.genre)} &nbsp;·&nbsp;`));
-   right.appendChild(el("p", "muted", `<strong>ID:</strong> ${esc(book.id)}`));
+  // right.appendChild(el("p", "muted",
+  //   `<strong>Author:</strong> ${esc(book.author)} &nbsp;·&nbsp;`)); 
+  // right.appendChild(el("p", "muted", `<strong>Genre:</strong> ${esc(book.genre)} &nbsp;·&nbsp;`));
+  // right.appendChild(el("p", "muted", `<strong>ID:</strong> ${esc(book.id)}`));
+  const meta = el("div", "book-meta-list");
+  meta.style.cssText =
+    "display:grid;grid-template-columns:auto 1fr;gap:5px 12px;" +
+    "margin:8px 0 0;font-size:14px;align-items:baseline";
+  for (const [label, value] of [
+    ["Author", book.author],
+    ["Genre", book.genre],
+    ["ID", book.id],
+  ]) {
+    const l = el("span", null, label);
+    l.style.cssText = "color:var(--muted);font-weight:600;white-space:nowrap";
+    const v = el("span", null, value ? esc(value) : "&mdash;");
+    meta.append(l, v);
+  }
+  right.appendChild(meta);
   // Blurb / description, straight from data/books.json. Accepts either key
   // name, and renders paragraphs separated by a blank line. Styled inline so
   // this needs no change to css/styles.css.
