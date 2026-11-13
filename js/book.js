@@ -210,7 +210,32 @@ function renderHead() {
   right.appendChild(el("h1", null, esc(book.title)));
   right.appendChild(el("p", "muted",
     `<strong>Author:</strong> ${esc(book.author)} &nbsp;·&nbsp; <strong>Genre:</strong> ${esc(book.genre)} &nbsp;·&nbsp; <strong>ID:</strong> ${esc(book.id)}`));
-  if (book.description) right.appendChild(el("p", "muted small", esc(book.description)));
+  // Blurb / description, straight from data/books.json. Accepts either key
+  // name, and renders paragraphs separated by a blank line. Styled inline so
+  // this needs no change to css/styles.css.
+  const blurb = String(book.description ?? book.blurb ?? "").trim();
+  if (blurb) {
+    const box = el("div", "book-blurb");
+    box.style.cssText =
+      "margin-top:12px;padding:12px 14px;background:#f7f9fc;" +
+      "border:1px solid var(--line);border-radius:10px";
+    box.appendChild(el("div", null,
+      '<strong style="font-size:12.5px;color:var(--muted);' +
+      'text-transform:uppercase;letter-spacing:.04em">Description</strong>'));
+    for (const para of blurb.split(/\n\s*\n/)) {
+      const t = para.trim();
+      if (!t) continue;
+      const pEl = el("p", null, esc(t).replace(/\n/g, "<br />"));
+      pEl.style.cssText = "margin:6px 0 0;font-size:14px;line-height:1.55";
+      box.appendChild(pEl);
+    }
+    right.appendChild(box);
+  } else {
+    console.warn(
+      `No description for "${bookId}" — add a "description" (or "blurb") ` +
+      `field to its entry in data/books.json.`
+    );
+  }
 
   const box = el("div", "orig-rate");
   box.appendChild(el("h3", null, "Rate the original cover"));
