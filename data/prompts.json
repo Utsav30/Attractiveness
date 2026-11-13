@@ -10,7 +10,7 @@
   { "id": "p09", "text": "Analyze the following book cover image based on its attractiveness." , "task": "Identity-preserving design"},
   { "id": "p10", "text": "Analyze the following book cover image based on its attractiveness." , "task": "Radical creative interpretation"},
   { "id": "p11", "text": "Analyze the following book cover image based on its attractiveness." , "task": "Emotional interpretation"},
-  { "id": "p12", "text": "Analyze the following book cover image based on its attractiveness." , "task": "blurb-aware contextual design"},
+  { "id": "p12", "text": "Analyze the following book cover image based on its attractiveness." , "task": "Blurb-aware contextual design"},
   { "id": "p13", "text": "Analyze the following book cover image based on its attractiveness." , "task": "Classical retro"},
   { "id": "p14", "text": "Analyze the following book cover image based on its attractiveness." , "task": "Modern design"}
 ]
