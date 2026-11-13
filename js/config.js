@@ -20,7 +20,7 @@ export const CONFIG = {
 
   // How many books each annotator gets is NOT set here — it is however many
   // ids you list for them in data/assignments.json.
-  COVERS_PER_PROMPT: 4,     // generated covers in each prompt row (one per generator)
+  COVERS_PER_PROMPT: 3,     // generated covers in each prompt row (one per generator)
   RATING_MAX: 10,           // attractiveness scale 1..RATING_MAX
   CONFIDENCE_MAX: 10,       // confidence scale 1..CONFIDENCE_MAX
   PANEL_TOP_N: 10,          // how many covers to pick in the final panel
