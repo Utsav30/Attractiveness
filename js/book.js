@@ -541,8 +541,8 @@ tabPanel.onclick = () => {
 
 function refreshStatus() {
   const rowsOk = prompts.filter((p) => rowDone(state.rows[p.id])).length;
-  document.getElementById("pillRows").textContent = `100`;
-    // `${rowsOk + (originalDone(state) ? 1 : 0)}/${prompts.length}`;
+  document.getElementById("pillRows").textContent =
+    `${rowsOk + (originalDone(state) ? 1 : 0)}/${prompts.length}`;
   document.getElementById("pillPanel").textContent = panelDone(state.panel) ? "✓" : "—";
 }
 
